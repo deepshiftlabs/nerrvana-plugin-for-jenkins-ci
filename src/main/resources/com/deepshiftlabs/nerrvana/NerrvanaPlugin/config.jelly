@@ -1,0 +1,11 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="Nerrvana plugin settings" field="settingsXmlString">
+    <f:textarea name="settingsXmlString" value="${it.settingsXmlString}" />
+  </f:entry>
+  <f:entry name="loglevel" title="Log level" field="loglevel">
+    <select name="loglevel">
+      <f:option value="normal" selected="${'normal'==instance.loglevel}">Normal</f:option>
+      <f:option value="trace" selected="${'trace'==instance.loglevel}">Trace</f:option>
+    </select>
+  </f:entry>   
+</j:jelly>
