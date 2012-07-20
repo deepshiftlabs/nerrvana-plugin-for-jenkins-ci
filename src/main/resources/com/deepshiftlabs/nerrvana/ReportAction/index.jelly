@@ -1,0 +1,37 @@
+<j:jelly 
+  xmlns:j="jelly:core" 
+  xmlns:st="jelly:stapler" 
+  xmlns:d="jelly:define" 
+  xmlns:l="/lib/layout" 
+  xmlns:t="/lib/hudson" 
+  xmlns:f="/lib/form">
+    <l:layout title="${it.owner.fullDisplayName}">
+        <st:include it="${it.owner}" page="sidepanel.jelly" />
+        <l:main-panel>
+          <h2>Nerrvana report for ${it.testrun.name}.</h2><br/>
+          <p>Space: ${it.spaceName} [Upload folder: ${it.spacePath}]</p>
+          <p>Started: ${it.exec.starttime}</p>
+          <p>Status: ${it.exec.status}</p>
+          <table style="width:100%;background:#eee;color:#afa123;
+            border:1px solid #333;border-radius:6px;-moz-border-radius:6px;-webkit-border-radius:6px;
+            font:Arial 12px;" 
+            cellpadding="5" cellspacing="0">
+            <tr style="background:url(/plugin/NerrvanaPlugin/icons/topbar.png);
+              color:#efefef;font-weight:bold;height:34px;vertical-align:middle;">
+              <td>#</td>
+              <td>Tested in</td>
+              <td>Result</td>
+              <td>Report</td>
+            </tr>
+            <j:forEach items="${it.exec.platforms}" var="r" varStatus="status">
+            <tr>
+              <td>${status.index+1}</td>
+              <td>${r.name}</td>
+              <td>${r.status}</td>
+              <td><a href="${r.browseurl}">${r.browsetitle}</a></td>
+            </tr>
+            </j:forEach>
+          </table>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
