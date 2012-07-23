@@ -27,8 +27,14 @@ import org.w3c.dom.*;
  *   <!-- Test run name template, the revision number will be added to the end automatically -->
  *   <test-run-name>AnswersTests_PGSQL</test-run-name>
  * 
- *   <!-- Test run description, all test runs created by Jenkins will be with this description -->
+ *   <!-- Test run description, all test runs created by Jenkins will have this description -->
  *   <test-run-descr>Created by Nerrvana-Jenkins plugin</test-run-descr>
+ *   
+ *   <!-- Dynamic part of the test run description.
+ *        If such file exists, plugin will append its content to the test run description.
+ *        For example, you can pass SVN revision number, SVN commit time or any other information into plugin.
+ *    -->
+ *   <test-run-descr-file>version.txt</test-run-descr-file>
  * 
  *   <!-- Which executable file Nerrvana should use to start tests -->
  *   <executable-file>xbuild-pgsql.sh</executable-file>
@@ -80,6 +86,7 @@ import org.w3c.dom.*;
  *     <!-- How often Nerrvana plug-in will update tests execution status from Nerrvana (seconds) -->
  *     <poll-period>20</poll-period>
  *   </plugin-settings>
+ *   
  * </nerrvana-plugin>
  * }
  * </pre>
@@ -97,6 +104,7 @@ public class NerrvanaPluginSettings {
   public int nodes_count;
   public String test_run_name;
   public String test_run_descr;
+  public String test_run_descr_file;
   
   public String executable_file;
   public boolean validation = false;
@@ -133,6 +141,7 @@ public class NerrvanaPluginSettings {
 
     npc.test_run_name = Utils.uniqueTagValue("test-run-name",doc,false);
     npc.test_run_descr = Utils.uniqueTagValue("test-run-descr",doc,false);
+    npc.test_run_descr_file = Utils.uniqueTagValue("test-run-descr-file",doc,false);
 
     npc.executable_file = Utils.uniqueTagValue("executable-file",doc,true);
     npc.folder_with_tests = Utils.uniqueTagValue("folder-with-tests",doc,false);

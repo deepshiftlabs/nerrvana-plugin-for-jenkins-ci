@@ -60,25 +60,33 @@ public class Testrun{
   public String getName(){return name;}
   public String getDescription(){return description;}
   
+  /**
+   * @version 1.0 finds revision.txt, extracts revision number and appends it to the name.
+   * @version 1.1 revision.txt related logic excluded, since Jenkins job could be non SCM-driven
+   * @param test_run_name
+   * @param build
+   * @return assembled test run name
+   */
   public static String assembleName(String test_run_name,AbstractBuild<?,?> build){
-    File froot = build.getRootDir();
-    File frev = new File(froot,"revision.txt");
-    String revision = null;
-    if(frev.exists()){
-      try{
-        FileInputStream in = new FileInputStream(frev);
-        byte[] ab = new byte[(int)frev.length()];
-        in.read(ab);
-        String s = new String(ab);
-        revision = s.substring(s.lastIndexOf(File.separatorChar)+1).trim();
-      }
-      catch(Exception e){
-        Logger.infoln("Cannot determine current revision number");
-      }
-    }
+//    File froot = build.getRootDir();
+//    File frev = new File(froot,"revision.txt");
+//    String revision = null;
+//    if(frev.exists()){
+//      try{
+//        FileInputStream in = new FileInputStream(frev);
+//        byte[] ab = new byte[(int)frev.length()];
+//        in.read(ab);
+//        String s = new String(ab);
+//        revision = s.substring(s.lastIndexOf(File.separatorChar)+1).trim();
+//      }
+//      catch(Exception e){
+//        Logger.infoln("Cannot determine current revision number");
+//      }
+//    }
     if(test_run_name == null || test_run_name.length() == 0)
       test_run_name = build.getProject().getDisplayName();
-    return test_run_name+" build #"+build.getNumber()+"[rev."+revision+"]";
+    return test_run_name+" build #"+build.getNumber();
+    //+"[rev."+revision+"]";
   }
 
   

@@ -217,6 +217,18 @@ public class NerrvanaPlugin extends Builder {
             String tname = Testrun.assembleName(settings.test_run_name, build);
             Logger.infoln("Generated test run name: " + tname);
 
+            // 1-1. assemble test run description
+            String tdesc = settings.test_run_descr == null ? "" : settings.test_run_descr;
+            FilePath ws = build.getWorkspace();
+            if(settings.test_run_descr_file != null && settings.test_run_descr_file.length() > 0){
+                String from_file = "";
+                if(ws.child(settings.test_run_descr_file).exists()){
+                    from_file = ws.child(settings.test_run_descr_file).readToString();
+                }
+                if(from_file != null && from_file.trim().length() > 0)
+                    tdesc += "\n" + from_file;
+            }
+
             // 2. create communicator which will talk to Nerrvana cloud
             Logger.trace("Creating HttpCommunicator...");
             comm = new HttpCommunicator(settings);
@@ -232,7 +244,7 @@ public class NerrvanaPlugin extends Builder {
 
             // 4. Call Nerrvana for test run creation and start 
             Logger.info("Creating and starting test run via Nerrvana HTTP API call...");
-            testrun = comm.createTestrun(settings.space_id, tname, settings.test_run_descr, settings.platforms, settings.executable_file, false, settings.nodes_count);
+            testrun = comm.createTestrun(settings.space_id, tname, tdesc, settings.platforms, settings.executable_file, false, settings.nodes_count);
             Logger.infoln("done.\n");
             Logger.infoln("New test run ID#" + testrun.id + ".");
             Logger.infoln("New execution ID#" + testrun.exec_id + ".");
