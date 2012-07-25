@@ -1,7 +1,7 @@
 package com.deepshiftlabs.nerrvana;
 
 /**
- * HTTP response exception<br>
+ * HTTP response exception
  * It is raised when API returns HTTP status other than 200. 
  * 
  * @author <a href="http://www.deepshiftlabs.com/">Deep Shift Labs</a>

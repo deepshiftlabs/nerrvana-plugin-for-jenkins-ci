@@ -17,12 +17,12 @@ import org.w3c.dom.*;
  *     <name><![CDATA[First_created_by_API]]></name>
  *     <description><![CDATA[Bla bla bla]]></description>
  *     <executable_file><![CDATA[rebuildAndRun.sh]]></executable_file>
- *     <contexts>
- *       <context>
+ *     <platforms>
+ *       <platform>
  *         <code>winxp_sp3_firefox_3</code>
  *         <name>Firefox 3/WinXP SP3</name>
- *       <context>
- *     </contexts>
+ *       <platform>
+ *     </platforms>
  *     <start_date>2012-02-21</start_date>
  *     <week_days>Monday, Tuesday</week_days>
  *     <start_time>20:45</start_time>

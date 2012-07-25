@@ -114,9 +114,9 @@ public class NerrvanaPluginSettings {
   public String space_id;
   public String space_name;
   public String space_path;
-  public String ftpurl;
-  public String ftpuser;
-  public String ftppass;
+  public String ftpsurl;
+  public String ftpsuser;
+  public String ftpspass;
 
   public int maxtime;
   public int poll;
@@ -154,9 +154,9 @@ public class NerrvanaPluginSettings {
     npc.space_name = Utils.getUniqueChildNodeValue(list.item(0),"name");
     npc.space_path = Utils.getUniqueChildNodeValue(list.item(0),"ftp-path");
 
-    npc.ftpurl = Utils.uniqueTagValue("server",doc,true);
-    npc.ftpuser = Utils.uniqueTagValue("username",doc,true);
-    npc.ftppass = Utils.uniqueTagValue("password",doc,true);
+    npc.ftpsurl = Utils.uniqueTagValue("server",doc,true);
+    npc.ftpsuser = Utils.uniqueTagValue("username",doc,true);
+    npc.ftpspass = Utils.uniqueTagValue("password",doc,true);
 
     try{
       npc.maxtime = Integer.parseInt(Utils.uniqueTagValue("max-execution-time",doc,false));
@@ -211,7 +211,7 @@ public class NerrvanaPluginSettings {
     }
     
     //TODO: can it be empty? 
-    Logger.infoln("\tSpace path[FTP folder]: "+this.space_path);
+    Logger.infoln("\tSpace path[FTPS folder]: "+this.space_path);
     if(space_path == null || space_path.length() == 0){
       Logger.infoln("\tNerrvana space folder is not valid. Fatal error.");
       result = false;
@@ -236,27 +236,27 @@ public class NerrvanaPluginSettings {
       result = false;
     }
 
-    if(ftpurl == null || ftpurl.length() == 0){
-      Logger.infoln("\tNerrvana FTP address: "+this.ftpurl);
-      Logger.infoln("\tNerrvana FTP address not defined. Fatal error.");
+    if(ftpsurl == null || ftpsurl.length() == 0){
+      Logger.infoln("\tNerrvana FTPS address: "+this.ftpsurl);
+      Logger.infoln("\tNerrvana FTPS address not defined. Fatal error.");
       result = false;
     }
     else{
-      if(ftpurl.startsWith("ftp://"))
-        ftpurl = ftpurl.substring("ftp://".length());
-      else if(ftpurl.startsWith("ftps://"))
-        ftpurl = ftpurl.substring("ftps://".length());
-      Logger.infoln("\tNerrvana FTP address: "+this.ftpurl);
+      if(ftpsurl.startsWith("ftp://"))
+        ftpsurl = ftpsurl.substring("ftp://".length());
+      else if(ftpsurl.startsWith("ftps://"))
+        ftpsurl = ftpsurl.substring("ftps://".length());
+      Logger.infoln("\tNerrvana FTPS address: "+this.ftpsurl);
     }
 
-    Logger.infoln("\tNerrvana FTP user: "+this.ftpuser);
-    if(ftpuser == null || ftpuser.length() == 0){
-      Logger.infoln("\tNerrvana FTP username is missing. Fatal error.");
+    Logger.infoln("\tNerrvana FTPS user: "+this.ftpsuser);
+    if(ftpsuser == null || ftpsuser.length() == 0){
+      Logger.infoln("\tNerrvana FTPS username is missing. Fatal error.");
       result = false;
     }
-    Logger.infoln("\tNerrvana FTP pass: "+this.ftppass);
-    if(ftppass == null || ftppass.length() == 0){
-      Logger.infoln("\tNerrvana FTP password is missing. Fatal error.");
+    Logger.infoln("\tNerrvana FTPS pass: "+this.ftpspass);
+    if(ftpspass == null || ftpspass.length() == 0){
+      Logger.infoln("\tNerrvana FTPS password is missing. Fatal error.");
       result = false;
     }
     

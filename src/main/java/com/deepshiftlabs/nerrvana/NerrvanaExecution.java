@@ -6,7 +6,7 @@ import org.w3c.dom.*;
 /**
  * <p>Parses and wraps information about tests execution in Nerrvana.
  * @see HttpCommunicator#getExecutionStatus(NerrvanaExecution)</p>
- * <br>
+ * 
  * This class expects to get following response from Nerrvana API:
  * <pre>
  * {@code 
@@ -22,7 +22,7 @@ import org.w3c.dom.*;
  *                  <id>9234</id>
  *                  <code>winxp_sp3_firefox_110</code>
  *                  <name><![CDATA[Firefox 11.0/WinXP SP3]]></name>
- *                  <browse_url>https://xxx.ftp.nerrvana.com/demo_space/_test_runs/Testrun-Name/2022_01_22_22_22_22/winxp_sp3_firefox_110/</browse_url>
+ *                  <browse_url>https://xxx.ftps.nerrvana.com/demo_space/_test_runs/Testrun-Name/2022_01_22_22_22_22/winxp_sp3_firefox_110/</browse_url>
  *                  <status><![CDATA[ok]]></status>
  *              </platform>
  *          </platforms>

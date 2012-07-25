@@ -30,9 +30,9 @@ public class NerrvanaPluginSettingsTest extends TestCase {
         settings.space_id = "123";
         settings.space_name = "space_name";
         settings.space_path = "space_name/some_path";
-        settings.ftpurl = "ftp.nerrvana.com";
-        settings.ftpuser = "ftp_name";
-        settings.ftppass = "ftp_path";
+        settings.ftpsurl = "ftp.nerrvana.com";
+        settings.ftpsuser = "ftp_name";
+        settings.ftpspass = "ftp_path";
 
         settings.maxtime = 3600;
         settings.poll = 60;
@@ -65,8 +65,8 @@ public class NerrvanaPluginSettingsTest extends TestCase {
         assertTrue(settings.checkSettings());
         
         //no ftpurl
-        s = settings.ftpurl; settings.ftpurl = null;
-        assertFalse(settings.checkSettings()); settings.ftpurl = s;
+        s = settings.ftpsurl; settings.ftpsurl = null;
+        assertFalse(settings.checkSettings()); settings.ftpsurl = s;
         
         //no space_name
         s = settings.space_name; settings.space_name = null;
