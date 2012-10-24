@@ -2,7 +2,9 @@ package com.deepshiftlabs.nerrvana;
 
 import hudson.*;
 import hudson.util.*;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.tasks.*;
 import net.sf.json.JSONObject;
 
@@ -13,98 +15,103 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.servlet.ServletException;
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
+
+import org.w3c.dom.*;
 
 /**
- * NerrvanaPlugin - remotely runs Selenium tests at Nerrvana cloud.
- * For details see {@link <a href="https://nerrvana.com/docs/get-started">Nerrvana - GET STARTED</a>}
- * 
- * How plugin works:
- * <ol>
- * <li>Uploads Selenium tests to the Nerrvana cloud by FTPS.
- * <li>Starts tests using Nerrvana API. 
- * <li>Polls Nerrvana for tests execution status until they're complete. 
- * <li>Creates report with tests result. Report contains link to the test artifacts
- * on Nerrvana side.
- * </ol>
- * NOTE: plugin uses {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} to upload tests to the Nerrvana cloud.
- * 
+ * NerrvanaPlugin - remotely runs Selenium tests at Nerrvana cloud. For details
+ * see
+ * {@link <a href="https://nerrvana.com/docs/get-started">Nerrvana - GET STARTED</a>}
+ *
+ * How plugin works: <ol> <li>Uploads Selenium tests to the Nerrvana cloud by
+ * FTPS. <li>Starts tests using Nerrvana API. <li>Polls Nerrvana for tests
+ * execution status until they're complete. <li>Creates report with tests
+ * result. Report contains link to the test artifacts on Nerrvana side. </ol>
+ * NOTE: plugin uses
+ * {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} to upload
+ * tests to the Nerrvana cloud.
+ *
  * @author <a href="http://www.deepshiftlabs.com/">Deep Shift Labs</a>
  * @author <a href="mailto:wise@deepshiftlabs.com">Victor Orlov</a>
  * @version 1.00
+ * @version 1.01 added
+ * {@link #saveExecutionResults(AbstractBuild, Testrun)}, {@link #saveReportAggregated(AbstractBuild, String)}
  */
 public class NerrvanaPlugin extends Builder {
+
     /**
-     * <p>Plugin configuration parameter 'settingsXmlString'. This parameter is
-     * represented in config.jelly as TEXTAREA</p>
-     * 
-     * <p>Nerrvana user should generate settings XML in Nerrvana web interface and paste
-     * it into the plugin config field "Nerrvana plugin settings"</p>
-     * 
+     * <p> Plugin configuration parameter 'settingsXmlString'. This parameter is
+     * represented in config.jelly as TEXTAREA </p>
+     *
+     * <p> Nerrvana user should generate settings XML in Nerrvana web interface
+     * and paste it into the plugin config field "Nerrvana plugin settings" </p>
+     *
      * Parameter is initialized in plugin constructor.
      */
     public final String settingsXmlString;
-    
     /**
-     * <p>Plugin configuration parameter 'logLevel'. This parameter is represented
-     * in config.jelly as SELECT with two values (NORMAL and TRACE)</p>
-     * 
+     * <p> Plugin configuration parameter 'logLevel'. This parameter is
+     * represented in config.jelly as SELECT with two values (NORMAL and TRACE)
+     * </p>
+     *
      * Parameter is initialized in plugin constructor
      */
     public final String loglevel;
-
     /**
      * Nerrvana plugin settings object
      */
     private NerrvanaPluginSettings settings;
-
     /**
-     * <p>Template of the command file for {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>}.
-     * This template is used if Jenkins <b>puts tests into some folder inside job's workspace</b>.</p>
-     * 
-     * Plugin creates actual command set using following parameters from {@link NerrvanaPluginSettings}:
-     * <ol>
-     * <li>1 - FTPS host {@link NerrvanaPluginSettings#ftpsurl} 
-     * <li>2 - user {@link NerrvanaPluginSettings#ftpsuser}
-     * <li>3 - pass {@link NerrvanaPluginSettings#ftpspass}
-     * <li>4 - FTPS folder {@link NerrvanaPluginSettings#space_path}
-     * <li>5 - local folder (in Jenkins job workspace) {@link NerrvanaPluginSettings#folder_with_tests}
+     * HTTP/HTTPS capable communicator which talks to Nerrvana cloud
+     */
+    private HttpCommunicator comm;
+    /**
+     * <p> Template of the command file for
+     * {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>}. This
+     * template is used if Jenkins <b>puts tests into some folder inside job's
+     * workspace</b>. </p>
+     *
+     * Plugin creates actual command set using following parameters from
+     * {@link NerrvanaPluginSettings}: <ol> <li>1 - FTPS host
+     * {@link NerrvanaPluginSettings#ftpsurl} <li>2 - user
+     * {@link NerrvanaPluginSettings#ftpsuser} <li>3 - pass
+     * {@link NerrvanaPluginSettings#ftpspass} <li>4 - FTPS folder
+     * {@link NerrvanaPluginSettings#space_path} <li>5 - local folder (in
+     * Jenkins job workspace) {@link NerrvanaPluginSettings#folder_with_tests}
      * </ol>
      */
-    private static final String ftpsTemplateWithLocalFolder = 
-    "open %s -u %s,%s\n" + 
-    "set ftp:list-options -a\n" + 
-    "set ftp:ssl-protect-data on\n" + 
-    "cd %s\n" + 
-    "lcd %s\n" + 
-    "mirror --delete --parallel=50 -R .\n" + 
-    "";
-
+    private static final String ftpsTemplateWithLocalFolder = "open %s -u %s,%s\n"
+            + "set ftp:list-options -a\n"
+            + "set ftp:ssl-protect-data on\n"
+            + "cd %s\n"
+            + "lcd %s\n"
+            + "mirror --delete --parallel=50 -R .\n"
+            + "";
     /**
-     * <p>Template of the command file for {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} 
-     * This template is used if Jenkins <b>puts tests directly into workspace</b>.</p>
-     * 
-     * Plugin creates actual command set using following parameters from {@link NerrvanaPluginSettings}:
-     * <ol>
-     * <li>1 - FTPS host {@link NerrvanaPluginSettings#ftpsurl} 
-     * <li>2 - user {@link NerrvanaPluginSettings#ftpsuser}
-     * <li>3 - pass {@link NerrvanaPluginSettings#ftpspass}
-     * <li>4 - FTPS folder {@link NerrvanaPluginSettings#space_path}
-     * </ol>
+     * <p> Template of the command file for
+     * {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} This
+     * template is used if Jenkins <b>puts tests directly into workspace</b>.
+     * </p>
+     *
+     * Plugin creates actual command set using following parameters from
+     * {@link NerrvanaPluginSettings}: <ol> <li>1 - FTPS host
+     * {@link NerrvanaPluginSettings#ftpsurl} <li>2 - user
+     * {@link NerrvanaPluginSettings#ftpsuser} <li>3 - pass
+     * {@link NerrvanaPluginSettings#ftpspass} <li>4 - FTPS folder
+     * {@link NerrvanaPluginSettings#space_path} </ol>
      */
-    private static final String ftpsTemplateNoFolder = 
-    "open %s -u %s,%s\n" + 
-    "set ftp:list-options -a\n" + 
-    "set ftp:ssl-protect-data on\n" + 
-    "cd %s\n" + 
-    "mirror --delete --parallel=50 -R .\n" +
-    "glob -a rm -r upload-build*\n" + 
-    "";
+    private static final String ftpsTemplateNoFolder = "open %s -u %s,%s\n"
+            + "set ftp:list-options -a\n" + "set ftp:ssl-protect-data on\n"
+            + "cd %s\n" + "mirror --delete --parallel=50 -R .\n"
+            + "glob -a rm -r upload-build*\n" + "";
 
     /**
-     * Plugin constructor
-     * Fields in config.jelly must match the parameter names in the org.kohsuke.stapler.DataBoundConstructor
-     * 
-     * @param settingsXmlString Plugin settings generated by {@link <a href="https://cloud.nerrvana.com">Nerrvana</a>}}
+     * Plugin constructor Fields in config.jelly must match the parameter names
+     * in the org.kohsuke.stapler.DataBoundConstructor
+     *
+     * @param settingsXmlString Plugin settings generated by
+     * {@link <a href="https://cloud.nerrvana.com">Nerrvana</a>}
      * @param loglevel Log level for plugin operations
      */
     @DataBoundConstructor
@@ -114,202 +121,347 @@ public class NerrvanaPlugin extends Builder {
     }
 
     /**
-     * Creates {@link ReportAction} object and adds it to the list of build actions
-     * @param build current build
-     * @param space_name {@link NerrvanaPluginSettings#space_name}
-     * @param space_path {@link NerrvanaPluginSettings#space_path}
-     * @param testrun Nerrvana testrun
-     * @param exec Nerrvana execution object
-     * @throws Exception
+     * Main plugin method
+     *
+     * @param build
+     * @param launcher
+     * @param listener
+     * @return true if plugin successfully completed
      */
-    private void saveNerrvanaReport(AbstractBuild<?, ?> build, String space_name, String space_path, Testrun testrun, NerrvanaExecution exec) throws Exception {
-        ReportAction action = new ReportAction(build, space_name, space_path, testrun, exec);
-        build.getActions().add(action);
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
+            BuildListener listener) {
+        boolean result = true;
+        Testrun testrun = null;
+        try {
+            // 1. read settings, init logger, create HTTP communicator
+            init(listener);
+            // 2. upload test files, register new test run and start tests
+            testrun = startTestRun(build, launcher, listener);
+            // 3. poll Nerrvana until test completion
+            poll(build, testrun);
+        } catch (Exception e) {
+            Logger.exception(e);
+            result = false;
+        } finally {
+            saveExecutionResults(build, testrun);
+            if (settings.testExecutionResults) {
+                result = NerrvanaExecution.testExecutionResults(build, settings);
+                try {
+                    saveReportAggregated(build, settings.executionResultsFilename);
+                } catch (Exception e) {
+                    Logger.exception(e);
+                }
+            }
+        }
+        Logger.infoln("\n-----END PLUGIN EXECUTION---\n\n");
+        return result;
     }
 
     /**
-     * Merges several environment variables into one set
-     * So far it merges
-     * - build.getEnvironment(listener); 
-     * - build.getBuildVariables();
-     *  
-     * TODO: consider adding 
-     * - Hudson.getInstance().getGlobalNodeProperties().get(EnvironmentVariablesNodeProperty.class);
-     * - Computer.currentComputer().getEnvironment();
-     * 
-     * @param build 
+     * Returns last Nerrvana response with root tag &lt;executions&gt; from
+     * plugin cache
+     *
+     * @return last response of type &lt;executions&gt; from Nerrvana side
+     */
+    private Document getLastExecutionResult() {
+        Document lastExecutionResult = null;
+        for (ListIterator<Document> iterator = Utils.parsedDocuments
+                .listIterator(Utils.parsedDocuments.size()); iterator
+                .hasPrevious();) {
+            Document doc = iterator.previous();
+            if (doc.getDocumentElement().getNodeName().equals("executions")) {
+                lastExecutionResult = doc;
+                break;
+            }
+        }
+        return lastExecutionResult;
+    }
+
+    private void saveExecutionResultsImpl(AbstractBuild<?, ?> build,
+            Document executionResults) throws Exception {
+        Document allExecutionResults = null;
+        File buildDir = build.getRootDir();
+        File allExecutionResultsFile = new File(buildDir,
+                this.settings.executionResultsFilename);
+        Logger.infoln("Saving execution results into "
+                + allExecutionResultsFile.getAbsolutePath() + "...");
+        if (allExecutionResultsFile.exists()) {
+            allExecutionResults = Utils.file2xml(allExecutionResultsFile
+                    .getAbsolutePath());
+            NodeList list = executionResults.getDocumentElement()
+                    .getElementsByTagName("execution");
+            for (int i = 0; i < list.getLength(); i++) {
+                Node node = allExecutionResults.adoptNode(list.item(i)
+                        .cloneNode(true));
+                allExecutionResults.getDocumentElement().appendChild(node);
+            }
+        } else {
+            allExecutionResults = executionResults;
+        }
+
+        Utils.xml2file(allExecutionResults, allExecutionResultsFile);
+        Logger.infoln("Done.");
+    }
+
+    /**
+     * Saves last &lt;execution&gt; object into file results.xml (Or merges
+     * &lt;execution&gt; object with existing file if needed)
+     *
+     * @param build
+     * @param testrun TestRun object which is executed by Nerrvana in the given
+     * NerrvanaExecution. Since Nerrvana API retruns only testrun ID, we pick
+     * test run name and description from this object and add them to the
+     * execution result.
+     * @return true if file saving was successful
+     */
+    private boolean saveExecutionResults(AbstractBuild<?, ?> build,
+            Testrun testrun) {
+        try {
+            // 1. get last execution object
+            Document lastExecutionResult = getLastExecutionResult();
+            // 2. save to existing results file or create new one
+            if (lastExecutionResult != null) {
+                NodeList nodelist = lastExecutionResult
+                        .getElementsByTagName("execution");
+                if (testrun != null) {
+                    Node exec = nodelist.item(0);
+                    Utils.setChildNodeCDATAValue(exec, "testrun_name",
+                            testrun.name);
+                    Utils.setChildNodeCDATAValue(exec, "testrun_description",
+                            testrun.description);
+                } else {
+                    Node exec = nodelist.item(0);
+                    Utils.setChildNodeCDATAValue(exec, "testrun_name",
+                            settings.test_run_name);
+                }
+                saveExecutionResultsImpl(build, lastExecutionResult);
+            } else {
+                Logger.infoln("Plugin didn't create/start any test run. Nothing to save into execution results file.");
+            }
+            return true;
+        } catch (Exception g) {
+            Logger.exception(g);
+            return false;
+        }
+    }
+
+    /**
+     * Creates {@link ReportActionAggregated} object and adds it to the list of
+     * build actions "Aggregated" means that report may contain results of all
+     * plugin instances installed (contained?) in this Jenkins job.
+     *
+     * @param build
+     * @param executionResultsFilename name of the file in build folder which
+     * contains results of all executions in this build (aggregated results
+     * returned by all Nerrvana plugins)
+     * @throws Exception
+     */
+    private void saveReportAggregated(AbstractBuild<?, ?> build,
+            String executionResultsFilename) throws Exception {
+        build.getActions().add(
+                new ReportActionAggregated(build, executionResultsFilename,
+                settings));
+    }
+
+    /**
+     * Merges several environment variables into one set So far it merges -
+     * build.getEnvironment(listener); - build.getBuildVariables();
+     *
+     * TODO: consider adding -
+     * Hudson.getInstance().getGlobalNodeProperties().get
+     * (EnvironmentVariablesNodeProperty.class); -
+     * Computer.currentComputer().getEnvironment();
+     *
+     * @param build
      * @param listener
      * @return merged set of variables
      * @throws Exception
      */
-    private EnvVars getEnvironment(AbstractBuild<?, ?> build, BuildListener listener) throws Exception {
-        StringBuilder sb = new StringBuilder();
+    private EnvVars getEnvironment(AbstractBuild<?, ?> build,
+            BuildListener listener) throws Exception {
         EnvVars envVars = build.getEnvironment(listener);
         for (Map.Entry<String, String> e : build.getBuildVariables().entrySet()) {
             envVars.put(e.getKey(), e.getValue());
-        }
-        for (Map.Entry<String, String> e : envVars.entrySet()) {
-            sb.append(e.getKey() + " = " + e.getValue() + "\n");
-        }
-
-        if (sb.length() > 0) {
-            Logger.infoln("---BEGIN BUILD ENVIRONMENT---\n");
-            Logger.info(sb.toString());
-            Logger.infoln("-----END BUILD ENVIRONMENT---\n");
         }
         return envVars;
     }
 
     /**
-     * Creates command script for {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} and
+     * Creates command script for
+     * {@link <a href="http://lftp.yar.ru/desc.html">lftp application</a>} and
      * uploads tests to the Nerrvana.
-     *   
+     *
      * @param build
      * @param launcher
      * @param listener
      * @return true on successful completion
      * @throws Exception
      */
-    private boolean uploadTests(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws Exception {
+    private boolean uploadTests(AbstractBuild<?, ?> build, Launcher launcher,
+            BuildListener listener) throws Exception {
         FilePath ws = build.getWorkspace();
         EnvVars envVars = getEnvironment(build, listener);
         String scriptContent = null;
-        if (settings.folder_with_tests == null || settings.folder_with_tests.length() == 0)
-            scriptContent = String.format(ftpsTemplateNoFolder, settings.ftpsurl, settings.ftpsuser, settings.ftpspass, settings.space_path);
-        else {
+        if (settings.folder_with_tests == null
+                || settings.folder_with_tests.length() == 0) {
+            scriptContent = String.format(ftpsTemplateNoFolder,
+                    settings.ftpsurl, settings.ftpsuser, settings.ftpspass,
+                    settings.space_path);
+        } else {
             if (ws.child(settings.folder_with_tests).exists()) {
-                scriptContent = String.format(ftpsTemplateWithLocalFolder, settings.ftpsurl, settings.ftpsuser, settings.ftpspass, settings.space_path, settings.folder_with_tests);
+                scriptContent = String.format(ftpsTemplateWithLocalFolder,
+                        settings.ftpsurl, settings.ftpsuser, settings.ftpspass,
+                        settings.space_path, settings.folder_with_tests);
             } else {
-                Logger.infoln("Folder '" + settings.folder_with_tests + "' to pick tests from not found (Check configuration parameter 'Workspace folder')");
+                Logger.infoln("Folder '"
+                        + settings.folder_with_tests
+                        + "' to pick tests from not found (Check configuration parameter 'Workspace folder')");
                 return false;
             }
         }
-        Logger.traceln("---BEGIN FTPS UPLOAD SCRIPT---");
-        Logger.trace(scriptContent);
-        Logger.traceln("-----END FTPS UPLOAD SCRIPT---");
-        FilePath script = ws.createTextTempFile("upload-build-" + build.getNumber() + "-", ".ftp", scriptContent, true);
-        String[] cmd = new String[] { "lftp", "-f", script.getName() };
+        StringBuilder sb = new StringBuilder(
+                "\n---BEGIN FTPS UPLOAD SCRIPT---\n").append(scriptContent)
+                .append("-----END FTPS UPLOAD SCRIPT---");
+        Logger.traceln(sb.toString());
+        FilePath script = ws.createTextTempFile(
+                "upload-build-" + build.getNumber() + "-", ".ftp",
+                scriptContent, true);
+        String[] cmd = new String[]{"lftp", "-f", script.getName()};
         try {
-            return launcher.launch().cmds(cmd).envs(envVars).stdout(listener).pwd(ws).join() == 0;
+            return launcher.launch().cmds(cmd).envs(envVars).stdout(listener)
+                    .pwd(ws).join() == 0;
         } finally {
             script.delete();
         }
     }
 
     /**
-     * Main plugin method
+     * Init logger, parse settings, create communicator object
+     *
+     * @param listener Jenkins object containing PrintStream which gets the
+     * console log
+     * @throws Exception
      */
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
+    private void init(BuildListener listener) throws Exception {
         Logger.init(listener.getLogger(), this.loglevel);
+        Logger.infoln("\n\n---BEGIN PLUGIN EXECUTION---");
+        Logger.infoln("---INITIALIZATION STARTED---");
+        // 1. parse Nerrvana Settings
+        settings = NerrvanaPluginSettings.parse(Utils
+                .string2xml(settingsXmlString));
+        if (!settings.checkSettings()) {
+            throw new Exception("Invalid plugin settings");
+        }
+        // 2. create communicator which will talk to Nerrvana cloud
+        comm = new HttpCommunicator(settings);
+        Logger.traceln("HttpCommunicator created");
+        Logger.infoln("-----INITIALIZATION COMPLETED---\n");
+    }
 
-        HttpCommunicator comm = null;
-        Testrun testrun = null;
-        NerrvanaExecution exec = null;
-        // I. initialize plugin
+    /**
+     * Uploads test files to Nerrvana FTPS, creates and starts Nerrvana test run
+     *
+     * @param build
+     * @param launcher
+     * @param listener
+     * @return TestRun object which corresponds to the new test run started on
+     * Nerrvana side
+     * @throws Exception
+     */
+    private Testrun startTestRun(AbstractBuild<?, ?> build, Launcher launcher,
+            BuildListener listener) throws Exception {
         try {
-            // 0. parse Nerrvana Settings
-            settings = NerrvanaPluginSettings.parse(Utils.string2xml(settingsXmlString));
-            if (!settings.checkSettings())
-                return false;
-
+            Testrun testrun = null;
             // 1. generate Nerrvana test run name
             String tname = Testrun.assembleName(settings.test_run_name, build);
             Logger.infoln("Generated test run name: " + tname);
 
-            // 1-1. assemble test run description
-            String tdesc = settings.test_run_descr == null ? "" : settings.test_run_descr;
-            FilePath ws = build.getWorkspace();
-            if(settings.test_run_descr_file != null && settings.test_run_descr_file.length() > 0){
-                String from_file = "";
-                if(ws.child(settings.test_run_descr_file).exists()){
-                    from_file = ws.child(settings.test_run_descr_file).readToString();
+            // 2. assemble test run description
+            String tdesc = Testrun.assembleDescription(build.getWorkspace(), settings);
+            Logger.infoln("Generated test run description:\n" + tdesc + "\n");
+
+            // 3. upload tests to Nerrvana FTPS
+            if (settings.skipUpload) {
+                Logger.infoln("---TESTS UPLOAD SKIPPED---");
+            } else {
+                Logger.infoln("---BEGIN UPLOADING TESTS TO NERRVANA FTPS---");
+                if (!uploadTests(build, launcher, listener)) {
+                    Logger.infoln("---FTPS UPLOAD FAILED");
+                    throw new Exception("Failed starting Nerrvana test run.");
                 }
-                if(from_file != null && from_file.trim().length() > 0)
-                    tdesc += "\n" + from_file;
+                Logger.infoln("-----END UPLOADING TESTS TO NERRVANA FTPS\n");
             }
+            
 
-            // 2. create communicator which will talk to Nerrvana cloud
-            Logger.trace("Creating HttpCommunicator...");
-            comm = new HttpCommunicator(settings);
-            Logger.traceln("done.");
-
-            // 3. upload tests to Nerrvana FTPS 
-            Logger.infoln("---BEGIN UPLOADING TESTS TO NERRVANA FTPS---");
-            if (!uploadTests(build, launcher, listener)) {
-                Logger.infoln("---FTPS UPLOAD FAILED");
-                return false;
-            }
-            Logger.infoln("---FTPS UPLOAD COMPLETE");
-
-            // 4. Call Nerrvana for test run creation and start 
-            Logger.info("Creating and starting test run via Nerrvana HTTP API call...");
-            testrun = comm.createTestrun(settings.space_id, tname, tdesc, settings.platforms, settings.executable_file, false, settings.nodes_count);
-            Logger.infoln("done.\n");
+            // 4. Call Nerrvana for test run creation and start
+            StringBuilder sb = new StringBuilder(
+                    "Creating and starting test run via Nerrvana HTTP API call...");
+            testrun = comm.createTestrun(settings.space_id, tname, tdesc,
+                    settings.platforms, settings.executable_file, false,
+                    settings.nodes_count);
+            sb.append("done.");
+            Logger.infoln(sb.toString());
             Logger.infoln("New test run ID#" + testrun.id + ".");
             Logger.infoln("New execution ID#" + testrun.exec_id + ".");
+            return testrun;
         } catch (Exception e) {
-            Logger.exception(e);
-            Logger.infoln("Failed starting Nerrvana test run.");
-            return false;
+            Document doc = NerrvanaExecution.fatalResult(
+                    getLastExecutionResult(), e, this.settings);
+            Utils.cacheDocument(doc);
+            throw e;
         }
+    }
 
-        // II. init Nerrvana execution object
-        exec = new NerrvanaExecution();
+    /**
+     * Poll Nerrvana test run execution status until timelimit exceeded or
+     * Nerrvana responds with 'err' or 'ok' status (which means that work is
+     * complete). Then create report
+     *
+     * @param build
+     * @param testrun
+     * @throws Exception
+     */
+    private void poll(AbstractBuild<?, ?> build, Testrun testrun)
+            throws Exception {
+        NerrvanaExecution exec = new NerrvanaExecution();
         exec.id = testrun.exec_id;
         long lmaxtime = settings.getMaxtimeMillis();
         long lpoll = settings.getPollMillis();
-        
-        // III. Poll Nerrvana test run execution status until timelimit exceeded
-        //      or Nerrvana responds with 'err' or 'ok' status (which means that work is complete).
-        //      Then create report
+
         try {
             Logger.infoln("---BEGIN NERRVANA POLLING CYCLE (waiting for tests to complete)");
             while (lmaxtime > 0) {
                 Thread.sleep(lpoll);
                 lmaxtime -= lpoll;
-                NerrvanaExecution newExec = comm.getExecutionStatus(exec);
+                NerrvanaExecution newExec = comm.getExecutionStatus(exec.id);
                 exec = newExec;
-                Logger.tori(exec.toString(), "\tCurrent execution status: " + exec.status + "\n");
-                if (!(exec.status == null || exec.status.trim().length() == 0 || exec.status.indexOf("plan") >= 0 || exec.status.indexOf("run") >= 0))
+                Logger.tori(exec.toString(), "\tCurrent execution status: "
+                        + exec.status + "\n");
+                if (!(exec.status == null || exec.status.trim().length() == 0
+                        || exec.status.indexOf("plan") >= 0 || exec.status
+                        .indexOf("run") >= 0)) {
                     break;
+                }
             }
             Logger.infoln("-----END NERRVANA POLLING CYCLE---");
 
             if (lmaxtime <= 0 && exec.status.indexOf("run") >= 0) {
-                throw new Exception("Maximum Nervana test execution time exceeded (Consider increasing corresponding parameter in job config).\n");
+                throw new Exception(
+                        "Maximum Nervana test execution time exceeded (Consider increasing corresponding parameter in job config).\n");
             }
-            Logger.trace("Saving Nerrvana tests execution report...");
-            saveNerrvanaReport(build, settings.space_name, settings.space_path, testrun, exec);
-            Logger.traceln("done.");
-            if (exec.status.equalsIgnoreCase("ok"))
-                return true;
-            else
-                return false;
         } catch (Exception e) {
-            Logger.exception(e);
-            Logger.traceln("Saving Nerrvana tests failure report...");
-            try {
-                exec.status = Utils.getTraceAsString(e);
-                List<Platform> platforms = exec.getPlatforms();
-                for (int i = 0; i < platforms.size(); i++) {
-                    platforms.get(i).status = "failure";
-                    platforms.get(i).browse_url = "Not available";
-                }
-                saveNerrvanaReport(build, settings.space_name, settings.space_path, testrun, exec);
-                Logger.traceln("done.");
-            } catch (Exception f) {
-                Logger.traceln("failed.");
-                Logger.exception(f);
-            }
-            return false;
+            Document doc = NerrvanaExecution.fatalResult(
+                    getLastExecutionResult(), e, this.settings);
+            Utils.cacheDocument(doc);
+            throw e;
         }
     }
 
     /**
-     * <p>Some Jenkins-specific mumbo-jumbo we ignore:</p>
-     * <tt>Overridden for better type safety.
-     * If your plugin doesn't really define any property on Descriptor, you don't have to do this.</tt>
+     * <p> Some Jenkins-specific mumbo-jumbo </p> <tt>Overridden for better type
+     * safety. If your plugin doesn't really define any property on Descriptor,
+     * you don't have to do this.</tt>
      */
     @Override
     public DescriptorImpl getDescriptor() {
@@ -317,19 +469,21 @@ public class NerrvanaPlugin extends Builder {
     }
 
     /**
-     * Descriptor for {@link NerrvanaPlugin}. Used as a singleton. The class
-     * is marked as public so that it can be accessed from views.
-     * 
-     * <p>
-     * See
+     * Descriptor for {@link NerrvanaPlugin}. Used as a singleton. The class is
+     * marked as public so that it can be accessed from views.
+     *
+     * <p> See
      * <tt>src\main\resources\com\deepshiftlabs\nerrvana\NerrvanaPlugin\config.jelly</tt>
      * for the actual HTML fragment for the configuration screen.
      */
     @Extension
-    // This indicates to Jenkins that this is an implementation of an extension point.
+    // This indicates to Jenkins that this is an implementation of an extension
+    // point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
-        public FormValidation doCheckSettingsXmlString(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckSettingsXmlString(
+                @QueryParameter String value) throws IOException,
+                ServletException {
             try {
                 NerrvanaPluginSettings.parse(Utils.string2xml(value));
                 return FormValidation.ok();
@@ -338,9 +492,12 @@ public class NerrvanaPlugin extends Builder {
             }
         }
 
-        public FormValidation doCheckLoglevel(@QueryParameter String value) throws IOException, ServletException {
-            if (value != null && (value.equals("normal") || value.equals("trace")))
+        public FormValidation doCheckLoglevel(@QueryParameter String value)
+                throws IOException, ServletException {
+            if (value != null
+                    && (value.equals("normal") || value.equals("trace"))) {
                 return FormValidation.ok();
+            }
             return FormValidation.error("Unsupported log level: " + value);
         }
 
@@ -358,7 +515,8 @@ public class NerrvanaPlugin extends Builder {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest req, JSONObject formData)
+                throws FormException {
             // To persist global configuration information,
             // set that to properties and call save().
             // ^Can also use req.bindJSON(this, formData);
