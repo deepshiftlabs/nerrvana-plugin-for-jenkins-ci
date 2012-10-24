@@ -1,0 +1,106 @@
+<j:jelly 
+  xmlns:j="jelly:core" 
+  xmlns:st="jelly:stapler" 
+  xmlns:d="jelly:define" 
+  xmlns:l="/lib/layout" 
+  xmlns:t="/lib/hudson" 
+  xmlns:f="/lib/form">
+    <l:layout title="${it.owner.fullDisplayName}">
+        <st:include it="${it.owner}" page="sidepanel.jelly" />
+        <l:main-panel>
+<style>
+    #ner table.testrun{
+        width:100%;
+        border-collapse:collapse;
+        margin-top:3em;
+        border:0.1em;
+        border-radius:5px;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+    }
+    #ner table.testrun th,#ner table.testrun td{
+        border:1px solid #4979b3;
+    }
+
+    #ner table.testrun th{
+        background:url(/plugin/NerrvanaPlugin/icons/topbar.png) repeat-x;
+        color:#fff;
+    }
+    #ner table.testrun td{
+        color:#4979b3;
+    }
+
+    #ner table.testrun tr.messages{
+        display:none;
+    }
+    
+    #ner table.testrun caption{
+        font-size:16px;
+        font-weight:normal;
+        text-align:left;
+        margin-bottom:1em;
+    }
+    
+    #ner table.testrun caption > sup{
+        display:block;
+        margin-top:1em;
+    }
+
+    #ner table.testrun td > .success{
+        color:#0000aa;
+    }
+
+    #ner table.testrun td > .failure{
+        color:#aa0000;
+    }
+    
+    #ner table.testrun a.metr{
+        display:block;
+    }
+</style>
+<script type="text/javascript" src="/plugin/NerrvanaPlugin/js/nerrvana-report.js"></script>
+<div id="ner">
+    <h1>Status: ${it.executionStatus}</h1>
+    <h3>(Message Threshold: ${it.messageThreshold})</h3>
+
+            <j:forEach items="${it.list}" var="exec" varStatus="execStatus">
+    <table class="testrun" cellspacing="0" cellpadding="3">
+        <caption>${exec.testrunName}<sup><pre>${exec.testrunDescription}</pre></sup></caption>
+        <tr>
+            <th style="width:5%">#</th>
+            <th style="width:55%">PLATFORM</th>
+            <th style="width:15%">STATUS</th>
+            <th style="width:25%">MESSAGES</th>
+        </tr>
+                <j:forEach items="${exec.platforms}" var="platform" varStatus="platformStatus">
+        <tr title="${platform.browseurl}" onmouseover="this.style.background='#ccc'" onmouseout="this.style.background='#fff'">
+            <td style="cursor:pointer;text-align:right;" onclick="${platform.browseurlMarkup}">${platformStatus.index+1}.</td>
+            <td style="cursor:pointer" onclick="${platform.browseurlMarkup}">${platform.name}</td>
+            <td style="cursor:pointer" onclick="${platform.browseurlMarkup}">${platform.status}</td>
+                    <j:if test="${platform.messageCount > 0}">
+            <td title="Click to toggle messages"><a href="javascript:toggleMessages('messages${execStatus.index+1}_${platformStatus.index+1}')" class="metr">${platform.messagesLabel}</a></td>
+                    </j:if>
+                    <j:if test="${platform.messageCount == 0}">
+            <td onclick="${platform.browseurlMarkup}">NO ERRORS</td>
+                    </j:if>
+        </tr>
+
+                    <j:if test="${platform.messageCount > 0}">
+        <tr class="messages" id="messages${execStatus.index+1}_${platformStatus.index+1}">
+            <td colspan="4">
+                        <j:forEach items="${platform.messages}" var="message" varStatus="messageStatus">
+                            <j:if test="${messageStatus.index > 0}">
+                <hr/>
+                            </j:if>
+                <pre>${message.txt}</pre>
+                        </j:forEach>
+            </td>
+        </tr>
+                    </j:if>
+                </j:forEach>
+    </table>
+            </j:forEach>
+</div>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

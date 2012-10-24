@@ -1,0 +1,26 @@
+ ------
+ Introduction
+ ------
+ 2011-10-12
+ ------
+
+
+Jenkins plugin for {{{http://www.nerrvana.com/features}Nerrvana Selenium Cloud}}
+
+ Jenkins plugin for {{{http://www.nerrvana.com}Nerrvana}} runs your 
+ Selenium tests on Nerrvana cloud. When tests are complete, plugin creates a resulting report. 
+
+ To use plugin you should register at {{{http://www.nerrvana.com}Nerrvana}}.
+ Nerrvana will generate settings for the plugin which you should copy/paste to the plugin configuration
+ in your Jenkins job. 
+
+ Plugin uses {{{http://lftp.yar.ru/desc.html}lftp}} to upload tests into your workspace at Nerrvana.
+
+
+Flowchart for Nerrvana plugin
+
+[./images/flowchart.png]
+
+Additional sources:
+
+ {{{http://www.nerrvana.com/docs/get-started}Nerrvana - User's Guide}}
