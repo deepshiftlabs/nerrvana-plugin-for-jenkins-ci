@@ -1,14 +1,38 @@
-Version 1.01.00 - 2012-07-23.
-=============================
--   Changed the way Nerrvana test run name is generated.
-    Previously it was expected that Jenkins build folder contain file 'revision.txt' with last revision number.
-    Now plugin doesn't rely upon this (because it is possible, that Jenkins job doesn't use SCM at all)
--   Added hook for Nerrvana test run description generator: if Nerrvana plugin settings XML contains non-empty tag
-    <test-run-descr-file>{filename}</test-run-descr-file>, the content of this file is appended to the test run
-    description. Actually this is more flexible way to pass version control revision number, name of the committer, 
-    or any other arbitrary information to Nerrvana cloud.
+ ------
+ Change log
+ ------
+ 2011-10-12
+ ------
 
-Version 1.00.00 - 2012-07-20 - Initial commit.
-==============================================
+What's new in version 1.02.00 - 2012-10-12
+ 
+ * Project documentation (generated with 'mvn site')
+
+ * Multiple plugins support. Each plugin now saves test run results into the 
+   file 'results.xml'. Last plugin in Nerrvana plugins chain can be assigned to 
+   interpret execution results and create aggregated execution report. 
+
+ * Misc changes and code improvements.
+
+What's new in version 1.01.00 - 2012-07-23
+
+ * Changed the way Nerrvana test run name is generated.
+   Previously it was expected that Jenkins build folder contain file 
+   'revision.txt' with last revision number.
+   Now plugin doesn't rely upon this (because it is possible, that Jenkins 
+   job doesn't use SCM at all)
+
+ * Added hook for Nerrvana test run description generator: if Nerrvana plugin 
+   settings XML contains non-empty tag 
+   <test-run-descr-file>{filename}</test-run-descr-file>, 
+   the content of this file is appended to the test run
+   description. Actually this is more flexible way to pass version control 
+   revision number, name of the committer, 
+   or any other arbitrary information to Nerrvana cloud.
+
+Version 1.00.00 - 2012-07-20
+
+ Initial commit
+
 
 

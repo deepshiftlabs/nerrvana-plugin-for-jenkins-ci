@@ -1,0 +1,74 @@
+<nerrvana-plugin>
+  <!-- You will be able to use this file to configure Nerrvana Jenkins plug-in in a near future -->
+  <!-- Nerrvana API parameters -->
+  <api-params>
+      <!-- Address of the Nerrvana gateway -->
+      <gateway>https://api.nerrvana.com</gateway>
+      <!-- User-specific key which identifies user on Nerrvana side -->
+      <!-- Available as an 'API public key' on Settings page (https://cloud.nerrvana.com/user/editAccount) in Nerrvana. -->
+      <apikey>[Your API key]</apikey>
+      <!-- This key is used by Nerrvana plug-in to create a checksum of an API call parameters to ensure their consistency. -->
+      <!-- Available as an 'API private key' on Settings page in Nerrvana. -->
+      <secretkey>[Your secret key]</secretkey>
+  </api-params>
+
+  <!-- Parameters related to Nerrvana-driven Selenium tests -->
+  <!-- Test run name template, the revision number will be added to the end automatically -->
+  <test-run-name>Demo tests</test-run-name>
+  <test-run-descr-file></test-run-descr-file>
+
+  <!-- Test run description, all test runs created by Jenkins will be with this description -->
+  <test-run-descr>Created by Nerrvana-Jenkins plugin</test-run-descr>
+
+  <!-- Which executable file Nerrvana should use to start tests -->
+  <executable-file>xbuild-pgsql.sh</executable-file>
+
+  <!-- List of platforms to run tests against for this config -->
+  <platforms>
+
+      <!-- List of available platforms. Uncomment to use. -->
+
+      <platform><code>centos_53_firefox_36</code><name>Firefox 3.6 (CentOS)</name></platform>
+      <!--platform><code>winxp_sp3_chrome_1801025</code><name>Chrome 18.0.1025 (WinXP)</name></platform-->
+      <platform><code>winxp_sp3_firefox_36</code><name>Firefox 3.6 (WinXP)</name></platform>
+      <!--platform><code>winxp_sp3_ie_8</code><name>IE 8 (WinXP)</name></platform-->
+      <!--platform><code>winxp_sp3_opera_1162</code><name>Opera 11.62 (WinXP)</name></platform-->
+      <!--platform><code>winxp_sp3_safari_53455</code><name>Safari 5.34.55 (WinXP)</name></platform-->
+
+      <platform><code>winxp_sp3_firefox_110</code><name>Firefox 11.0 (WinXP)</name></platform>
+  </platforms>
+
+  <!-- How many Selenium nodes should be used for each platform -->
+  <nodes-count>1</nodes-count>
+
+  <!-- Parameters related to the transfer of the tests from Jenkins to Nerrvana -->
+  <!-- Folder in the workspace of Jenkins job where Selenium tests will be located.
+       It is presumed that build step of SCM plug-in, which always occurs BEFORE other steps, puts tests in there. -->
+  <folder-with-tests>src</folder-with-tests>
+  <!-- Nerrvana space previously created by you through Nerrvana web interface -->
+  <space>
+      <id>4028</id>
+      <name>demo_space</name>
+      <ftp-path>demo_space/_files</ftp-path>
+  </space>
+  <!-- Address and credentials of the Nerrvana FTPS connection.
+       Note that a system running Jenkins should have LFTP application installed. -->
+  <ftp>
+    <server>ftp.nerrvana.com</server>
+    <!-- Your username -->
+    <username>[Your FTP username]</username>
+    <!-- Replace this value with your password!! -->
+    <password>[Your FTP password]</password>
+  </ftp>
+
+  <!-- Execution-specific parameters of the plugin -->
+  <plugin-settings>
+    <!-- Maximum execution time (in seconds). Defines how long Nerrvana plug-in
+         will wait for the tests to complete. Set to quite big value first and
+         adjust after few runs to avoid indefinite loops, for example.-->
+    <max-execution-time>3600</max-execution-time>
+    <!-- How often Nerrvana plug-in will update tests execution status from Nerrvana (seconds) -->
+    <poll-period>20</poll-period>
+  </plugin-settings>
+  <use-messages-to-set-build-status>false</use-messages-to-set-build-status>
+</nerrvana-plugin>

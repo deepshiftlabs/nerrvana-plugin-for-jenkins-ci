@@ -28,7 +28,19 @@ under the License.
       <item name="Change log" href="changelog.html"/>
       <item name="Usage" href="usage.html"/>
       <item name="Configuration" href="conf.html"/>
-      <item name="FAQ" href="faq.html"/>
+
+      <item name="Dependencies" href="dependencies.html"/>
+      <item name="Dependency management" href="dependency-management.html"/>
+      <item name="Distribution management" href="distribution-management.html"/>
+      <item name="Integration" href="integration.html"/>
+      <!-- item name="" href="license.html"/-->
+      <item name="Plugin management" href="plugin-management.html"/>
+      <item name="Plugins" href="plugins.html"/>
+      <item name="Project info" href="project-info.html"/>
+      <item name="Project summary" href="project-summary.html"/>
+      <!--item name="Source repository" href="source-repository.html"/-->
+      <!--item name="" href="team-list.html"/-->
+
     </menu>
   </body>
 </project>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>Usage</title>
+  </properties>
+
+  <body>
+    <section name="Usage">
+ 
+Once you got Nerrvana plugin installed in Jenkins, you can use it as a build step and run your Selenium tests in Nerrvana.<br/><br/>
+
+ We assume that
+<ul>
+<li>You know how to add Nerrvana plugin as the build step to the Jenkins job</li>
+  
+<li>You know how to obtain code of your Selenium tests into Jenkins 
+   workspace (e.g. pull tests code from SVN to Jenkins using Jenkins 
+   SVN plugin);</li>
+  
+<li>You have account at <a href="http://www.nerrvana.com">Nerrvana</a>.</li>
+</ul>
+
+ To initialize Nerrvana plugin you should obtain plugin settings from <a href="http://www.nerrvana.com">Nerrvana</a>
+<ol>
+<li>open Nerrvana Dashboard, point to any test run name with mouse(at least demo 
+   test runs should be there) and click pencil on the panel which appear to the 
+   left of the test run name. This will open "Edit test run" page.<br/>
+<img alt="Nerrvana dashboard" src="./images/dashboard.png" /><br/><br/>
+</li> 
+
+<li>On "Edit test run" page edit parameters as you want (or don't edit them at all - 
+   you may edit them later directly in generated config XML). To get the configuration
+   XML click "Generate Jenkins plugin config".<br/>
+<img alt="Edit test run" src="./images/plugin-config.png" /><br/><br/>
+</li>
+
+
+
+<li>Add build step "Nerrvana plug-in" to your Jenkins job.</li>
+  
+<li>Copy/paste generated plugin config into "Nerrvana plugin settings" of "Nerrvana plug-in" build step.<br/>
+<img alt="Jenkins Nerrvana plugin" src="./images/plugin-build-step.png" />
+</li>
+</ol>
+    </section>
+
+
+  </body>
+</document>
+

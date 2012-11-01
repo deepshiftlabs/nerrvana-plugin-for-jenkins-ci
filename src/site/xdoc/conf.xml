@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+  <properties>
+    <title>Configuration</title>
+  </properties>
+
+  <body>
+    <section name="Configuration parameters">
+        <table style="text-align:left;vertical-align:top;" cellpadding="3">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Mandatory</th>
+                    <th>Default value</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="4">
+                        <b>API parameters (Config section &lt;api-params&gt;)</b>
+                        <br/>
+                        <sup>Parameters, needed to connect and authenticate at Nerrvana cloud.</sup>
+                    </td>
+                </tr>
+                <tr>
+                    <td>gateway</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>Address of the Nerrvana gateway.<br/>(So far - https://api.nerrvana.com)</td>
+                </tr>
+                <tr>
+                    <td>apikey</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>User-specific key which identifies user on Nerrvana side. Available as an 'API public key' on Settings page (
+                        <a href="https://cloud.nerrvana.com/user/editAccount" target="_blank">https://cloud.nerrvana.com/user/editAccount</a>) in Nerrvana.
+                    </td>
+                </tr>
+                <tr>
+                    <td>secretkey</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>This key is used by Nerrvana plug-in to create a checksum of an API call parameters to ensure their consistency. Available as an 'API private key' on Settings page in Nerrvana.</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <b>Plugin settings. (Config section &lt;plugin-settings&gt;)</b>
+                        <br/>
+                        <sup>Plugin tuning parameters.</sup>
+                    </td>
+                </tr>
+                <tr>
+                    <td>use-messages-to-set-build-status</td>
+                    <td>no</td>
+                    <td>false</td>
+                    <td>
+Job status will be set to failed if tests execution in Nerrvana failed
+(tests did not manage to sync, executable file did not manage to start your
+tests etc.).<br/>
+However if tests were executed successfully you have a few options.
+<ol>
+    <li>Mark build as successful in Jenkins and analyse reports your tests generated
+        for problems your tests discovered</li>
+    <li>If you want to mark a build as failed based on errors your tests found you can:
+        <ol style="list-style-type:lower-alpha;">
+            <li>add additional step, load results, parse them to analyse errors your tests
+                discovered and mark build as failed based on it. Keep this parameter as 'false'
+                in this case</li>
+            <li>use Nerrvana "Messages" and let Nerrvana plugin to analyse them and change
+                build status to 'Failed' based on it. Keep this parameter as 'true' in this
+                case and use additional parameter 'message-threshold' to add additional logic.
+                If you use messages and invoke Nerrvana plug-in several times in the same build
+                keep this option 'false' for all invocations except last one to let build complete
+                all tests and analyse errors at the very end.</li>
+        </ol>
+    </li>
+</ol>
+                    </td>
+                </tr>
+                <tr>
+                    <td>message-threshold</td>
+                    <td>no</td>
+                    <td>ERROR</td>
+                    <td>If this value is set to WARN, for example, and your tests will generate at least one WARN or higher severity (ERROR or FATAL) message - Nerrvana execution status will be set as FAILED, and, consequently, Jenkins build will be set as FAILED as well. To see the full list of levels please visit http://www.nerrvana.com/docs/using-messages page.</td>
+                </tr>
+                <tr>
+                    <td>max-execution-time</td>
+                    <td>no</td>
+                    <td>3600</td>
+                    <td>Maximum execution time (in seconds). Defines how long Nerrvana plug-in will wait for the tests to complete. Set to quite big value first and adjust after few runs to avoid indefinite loops, for example.</td>
+                </tr>
+                <tr>
+                    <td>poll-period</td>
+                    <td>no</td>
+                    <td>25</td>
+                    <td>How often Nerrvana plug-in will update tests execution status from Nerrvana (in seconds)</td>
+                </tr>
+
+
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <b>Parameters related to Nerrvana-driven Selenium tests</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>test-run-name</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>Test run name template, Jenkins build number will be added to the end automatically</td>
+                </tr>
+
+                <tr>
+                    <td>test-run-descr</td>
+                    <td>no</td>
+                    <td>-</td>
+                    <td>Test run description. All test runs created by this Jenkins build step will have this description</td>
+                </tr>
+
+                <tr>
+                    <td>test-run-descr-file</td>
+                    <td>no</td>
+                    <td>-</td>
+                    <td>  Content of this file, if it exists and not empty, will be added to a description,
+  defined by test-run-descr parameter above.<br/>
+  File path is relative to the Jenkins job workspace.<br/>
+  During deployment phase you can extract revision number, commiter name and a
+  commit message from your version control system, put them into this file and
+  use them as a decription.<br/>
+  You can extract and parse SVN information into info.txt file with our little
+  tool - <a href="https://github.com/deepshiftlabs/scm-decorator" target="_blank">SCM decorator</a>
+  You can read how we do it with SVN in our blog.
+</td>
+                </tr>
+
+                <tr>
+                    <td>executable-file</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>Which executable file Nerrvana should use to start tests</td>
+                </tr>
+
+                <tr>
+                    <td>platforms</td>
+                    <td>yes (at least one platform should be defined)</td>
+                    <td>-</td>
+                    <td>
+                        List of platforms to run tests against for this config. Valid platforms are:<br/>
+<code>
+	  &lt;platform&gt;&lt;code&gt;centos_58_firefox_36&lt;/code&gt;&lt;name&gt;Firefox 3.6 (CentOS)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_chrome_2001132&lt;/code&gt;&lt;name&gt;Chrome 20.0.1132 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_chrome_2101180&lt;/code&gt;&lt;name&gt;Chrome 21.0.1180 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_firefox_150&lt;/code&gt;&lt;name&gt;Firefox 15.0 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_ie_8&lt;/code&gt;&lt;name&gt;IE 8 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_opera_1162&lt;/code&gt;&lt;name&gt;Opera 11.62 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_opera_1202&lt;/code&gt;&lt;name&gt;Opera 12.02 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_safari_515&lt;/code&gt;&lt;name&gt;Safari 5.1.5 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_safari_517&lt;/code&gt;&lt;name&gt;Safari 5.1.7 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_firefox_110&lt;/code&gt;&lt;name&gt;Firefox 11.0 (WinXP)&lt;/name&gt;&lt;/platform&gt;<br/>
+	  &lt;platform&gt;&lt;code&gt;winxp_sp3_firefox_36&lt;/code&gt;&lt;name&gt;Firefox 3.6 (WinXP)&lt;/name&gt;&lt;/platform&gt;
+</code>                        
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>nodes-count</td>
+                    <td>no</td>
+                    <td>1</td>
+                    <td>How many Selenium nodes should be used for each platform</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <b>Parameters related to the transfer of the tests from Jenkins to Nerrvana</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>folder-with-tests</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>Folder in the workspace of Jenkins job where Selenium tests will be located. It is presumed that build step of SCM plug-in, which always occurs BEFORE other steps, puts tests in there.</td>
+                </tr>
+
+                <tr>
+                    <td>space</td>
+                    <td>yes</td>
+                    <td>-</td>
+                    <td>Nerrvana space (previously created through Nerrvana web interface). Example:<br/>
+<pre>                        
+  &lt;space&gt;
+      &lt;id&gt;4028&lt;/id&gt;
+      &lt;name&gt;demo_space&lt;/name&gt;
+      &lt;ftp-path&gt;demo_space/_files&lt;/ftp-path&gt;
+  &lt;/space&gt;
+</pre>                        
+                    
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>ftp</td>
+                    <td>yes (unless &lt;skip-tests-sync&gt; is set to true)</td>
+                    <td>-</td>
+                    <td>
+                        Address and credentials of the Nerrvana FTPS connection. Note that a system running Jenkins should have LFTP application installed. Example:<br/>
+<pre>                        
+  &lt;ftp&gt;
+    &lt;server&gt;ftp.nerrvana.com&lt;/server&gt;
+    &lt;username&gt;wise&lt;/username&gt;
+    &lt;password&gt;[p a s s w o r d]&lt;/password&gt;
+  &lt;/ftp&gt;
+</pre>
+                        
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>skip-tests-sync</td>
+                    <td>no</td>
+                    <td>false</td>
+                    <td>You can skip tests sync when you call Nerrvana plugin many times in a single job and know they have been synced with Nerrvana on a previous step to speed up your tests.</td>
+                </tr>
+
+
+            </tbody>
+        </table>
+    </section>
+
+
+  </body>
+</document>
+
