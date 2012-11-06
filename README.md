@@ -9,7 +9,7 @@ To use plugin you should register at <a target="_blank" href="http://www.nerrvan
 Nerrvana will generate settings for the plugin which you should copy/paste to the plugin configuration
 in your Jenkins job. 
 
-Plugin uses <a target="_blank" href="">lftp</a> to upload tests into your workspace at Nerrvana.
+Plugin uses LFTP (yum install lftp) to upload tests into your workspace at Nerrvana.
 
 Additional sources:
     <a target="_blank" href="http://www.nerrvana.com/docs/get-started">Nerrvana - User's Guide</a>
