@@ -1,6 +1,6 @@
 <h1>Jenkins plugin for <a target="_blank" href="http://www.nerrvana.com/features">Nerrvana Selenium Cloud</a></h1>
 
-<img src="http://blog.nerrvana.com/wp-content/uploads/2012/07/Nerrvana.png" title="Nerrvana" />
+<img src="http://www.nerrvana.com/images/nerrvana-plugin-for-jenkins-ci.png" title="Nerrvana" />
 
 Jenkins plugin for <a target="_blank" href="http://www.nerrvana.com">Nerrvana</a> runs your 
 Selenium tests on Nerrvana cloud. When tests are complete, plugin creates a resulting report. 
