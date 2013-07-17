@@ -11,7 +11,7 @@
   </parent>
 
   <groupId>com.deepshiftlabs.nerrvana</groupId>
-  <artifactId>NerrvanaPlugin</artifactId>
+  <artifactId>nerrvana-plugin</artifactId>
   <version>1.02.02</version>
   <packaging>hpi</packaging>
 
