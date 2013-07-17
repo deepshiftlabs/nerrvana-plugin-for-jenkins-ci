@@ -87,40 +87,86 @@ public class HttpCommunicator {
 	 * @return signature string
 	 * @throws Exception
 	 */
-	private String calculateSignature(List<NameValuePair> params)
+	public String calculateSignature(List<NameValuePair> params)
 			throws Exception {
 		// 1. sort
 		StringBuilder sb = new StringBuilder();
 		SortedMap<String, String> map = new TreeMap<String, String>();
 		for (Iterator<NameValuePair> it = params.iterator(); it.hasNext();) {
 			NameValuePair nvp = it.next();
-			map.put(nvp.getName(), nvp.getValue());
+                        String k = nvp.getName() == null ? "" : nvp.getName().trim();
+                        String v = nvp.getValue() == null ? "" : nvp.getValue().trim();
+			map.put(k, v);
 		}
 		Set<Map.Entry<String, String>> set = map.entrySet();
-		for (Iterator<Map.Entry<String, String>> it = set.iterator(); it
-				.hasNext();) {
+		for (Iterator<Map.Entry<String, String>> it = set.iterator(); it.hasNext();) {
 			Map.Entry<String, String> entry = it.next();
 			String value = entry.getValue();
-			if (value == null) {
-				value = "";
-			}
-			Logger.traceln(entry.getKey() + " => " + value);
+			System.out.println("$params['"+entry.getKey()+"'] = '" + value + "';");
+			Logger.traceln("$params['"+entry.getKey()+"'] = '" + value + "';");
+			
 			sb.append(entry.getKey()).append(value);
 		}
 		String s = sb.toString();
 
 		// 2. get hash
 		Mac mac = Mac.getInstance("HmacSHA256");
-		SecretKeySpec secret = new SecretKeySpec(settings.secretkey.getBytes(),
-				"HmacSHA256");
+		SecretKeySpec secret = new SecretKeySpec(settings.secretkey.trim().getBytes(), "HmacSHA256");
+                byte[] secretEncoded = secret.getEncoded();
+                String s64 = Base64.encodeBytes(secretEncoded);
+		System.out.println("Secret[base64]: "+s64);
+		Logger.traceln("Secret[base64]: "+s64);
 		mac.init(secret);
 		byte[] digest = mac.doFinal(s.getBytes());
 		String d64 = Base64.encodeBytes(digest);
+		System.out.println("Signature[base64]: "+d64);
+		Logger.traceln("Signature[base64]: "+d64);
 		digest = MessageDigest.getInstance("MD5").digest(d64.getBytes());
 		sb = new StringBuilder();
 		for (int i = 0; i < digest.length; i++) {
 			sb.append(Integer.toString((digest[i] & 0xff) + 0x100, 16)
 					.substring(1));
+		}
+		return sb.toString();
+	}
+
+	public String calculateSignature(List<NameValuePair> params, String charset)
+			throws Exception {
+		// 1. sort
+		StringBuilder sb = new StringBuilder();
+		SortedMap<String, String> map = new TreeMap<String, String>();
+		for (Iterator<NameValuePair> it = params.iterator(); it.hasNext();) {
+			NameValuePair nvp = it.next();
+                        String k = nvp.getName() == null ? "" : nvp.getName().trim();
+                        String v = nvp.getValue() == null ? "" : nvp.getValue().trim();
+			map.put(k, v);
+		}
+		Set<Map.Entry<String, String>> set = map.entrySet();
+		for (Iterator<Map.Entry<String, String>> it = set.iterator(); it.hasNext();) {
+			Map.Entry<String, String> entry = it.next();
+			String value = entry.getValue();
+			System.out.println("$params['"+entry.getKey()+"'] = '" + value + "';");
+			Logger.traceln("$params['"+entry.getKey()+"'] = '" + value + "';");
+			sb.append(entry.getKey()).append(value);
+		}
+		String s = sb.toString();
+
+		// 2. get hash
+		Mac mac = Mac.getInstance("HmacSHA256");
+		SecretKeySpec secret = new SecretKeySpec(settings.secretkey.trim().getBytes(charset),	"HmacSHA256");
+                byte[] secretEncoded = secret.getEncoded();
+                String s64 = Base64.encodeBytes(secretEncoded);
+		System.out.println("Secret[base64]: "+s64);
+		Logger.traceln("Secret[base64]: "+s64);
+		mac.init(secret);
+		byte[] digest = mac.doFinal(s.getBytes(charset));
+		String d64 = Base64.encodeBytes(digest);
+		System.out.println("Signature[base64]: "+d64);
+		Logger.traceln("Signature[base64]: "+d64);
+		digest = MessageDigest.getInstance("MD5").digest(d64.getBytes(charset));
+		sb = new StringBuilder();
+		for (int i = 0; i < digest.length; i++) {
+			sb.append(Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1));
 		}
 		return sb.toString();
 	}

@@ -1,29 +1,46 @@
 <nerrvana-plugin>
-  <!-- You will be able to use this file to configure Nerrvana Jenkins plug-in in a near future -->
-  <!-- Nerrvana API parameters -->
+  <!-- Nerrvana API parameters. -->
   <api-params>
       <!-- Address of the Nerrvana gateway -->
       <gateway>https://api.nerrvana.com</gateway>
-      <!-- User-specific key which identifies user on Nerrvana side -->
-      <!-- Available as an 'API public key' on Settings page (https://cloud.nerrvana.com/user/editAccount) in Nerrvana. -->
+      <!--
+      User-specific key which identifies user on Nerrvana side.
+      Available as an 'API public key' on Settings page
+      (https://cloud.nerrvana.com/user/editAccount) in Nerrvana.
+      -->
       <apikey>[Your API key]</apikey>
-      <!-- This key is used by Nerrvana plug-in to create a checksum of an API call parameters to ensure their consistency. -->
-      <!-- Available as an 'API private key' on Settings page in Nerrvana. -->
+      <!--
+      This key is used by the Nerrvana plug-in to create a checksum of API call
+      parameters to ensure their consistency.
+      Available as an 'API private key' on Settings page in Nerrvana.
+      -->
       <secretkey>[Your secret key]</secretkey>
   </api-params>
 
-  <!-- Parameters related to Nerrvana-driven Selenium tests -->
-  <!-- Test run name template, the revision number will be added to the end automatically -->
+  <!-- Parameters related to Nerrvana-driven Selenium tests. -->
+  <!-- Test Run name template, Jenkins build number will be added to the end automatically. -->
   <test-run-name>Demo tests</test-run-name>
-  <test-run-descr-file></test-run-descr-file>
-
-  <!-- Test run description, all test runs created by Jenkins will be with this description -->
+  
+<!-- Test Run description. All Test Runs created by this Jenkins build step will have this description. -->
   <test-run-descr>Created by Nerrvana-Jenkins plugin</test-run-descr>
 
-  <!-- Which executable file Nerrvana should use to start tests -->
+  <!--
+  Content of this file, if not empty, will be added to a description,
+  defined by 'test-run-descr' parameter above.
+  File path is relative to the Jenkins job workspace.
+  During deployment phase you can extract revision number, commiter name and a
+  commit message from your version control system, put them into this file and
+  use them as a description.
+  You can extract and parse SVN information into info.txt file with our little
+  tool - https://github.com/deepshiftlabs/scm-decorator
+  You can read how we do it with SVN in our blog http://www.deepshiftlabs.com/sel_blog/?p=2343&lang=en-us.
+  -->
+  <test-run-descr-file>info.txt</test-run-descr-file>
+
+  <!-- Which executable file Nerrvana should use to start tests. -->
   <executable-file>xbuild-pgsql.sh</executable-file>
 
-  <!-- List of platforms to run tests against for this config -->
+  <!-- List of platforms to run tests against for this config. -->
   <platforms>
 
       <!-- List of available platforms. Uncomment to use. -->
@@ -38,14 +55,17 @@
       <platform><code>winxp_sp3_firefox_110</code><name>Firefox 11.0 (WinXP)</name></platform>
   </platforms>
 
-  <!-- How many Selenium nodes should be used for each platform -->
+  <!-- How many Selenium nodes should be used for each platform. -->
   <nodes-count>1</nodes-count>
 
-  <!-- Parameters related to the transfer of the tests from Jenkins to Nerrvana -->
-  <!-- Folder in the workspace of Jenkins job where Selenium tests will be located.
-       It is presumed that build step of SCM plug-in, which always occurs BEFORE other steps, puts tests in there. -->
+  <!-- Parameters related to the transfer of the tests from Jenkins to Nerrvana. -->
+  <!--
+  Folder in the workspace of Jenkins job where Selenium tests will be located. 
+  It is assumed that the SCM build step, which always occurs BEFORE other steps, 
+  will put tests there.
+  -->
   <folder-with-tests>src</folder-with-tests>
-  <!-- Nerrvana space previously created by you through Nerrvana web interface -->
+    <!-- Nerrvana space previously created by you through the Nerrvana UI. -->
   <space>
       <id>4028</id>
       <name>demo_space</name>
@@ -61,14 +81,48 @@
     <password>[Your FTP password]</password>
   </ftp>
 
+  <!--
+  You can skip test sync when you call the Nerrvana plugin many times in a single
+  job and tests were synced in a previous step.
+  -->
+  <skip-tests-sync>false</skip-tests-sync>
+
   <!-- Execution-specific parameters of the plugin -->
   <plugin-settings>
-    <!-- Maximum execution time (in seconds). Defines how long Nerrvana plug-in
-         will wait for the tests to complete. Set to quite big value first and
-         adjust after few runs to avoid indefinite loops, for example.-->
+    <!--
+    Job status will be set to FAILED if test execution in Nerrvana is unsuccessful
+    (tests did not sync, executable file did not start your tests, etc.).
+    If tests were executed successfully, you have a few options:
+    1. Mark build as successful in Jenkins and analyse generated reports 
+       for problems your tests discovered.
+    2. If you want to mark a build as FAILED based on errors your tests found, you can:
+    (a) Add additional step, load results, parse them to analyse errors your tests
+        discovered, and mark build as FAILED based on it. Keep this parameter as 'false'
+        in this case.
+    (b) Use Nerrvana "Messages" and let the Nerrvana plugin analyse results, and change
+        build status to FAILED based on it. Keep this parameter as 'true' in this
+        case and use additional parameter 'message-threshold' to add additional logic.
+    If you use messages and invoke the Nerrvana plug-in several times in the same build,
+    keep this option as 'false' for all invocations except the last one to let the build 
+    complete all tests and analyse errors at the very end.
+    -->
+    <use-messages-to-set-build-status>false</use-messages-to-set-build-status>
+
+    <!--
+    Defines the level at which a FAILED status is generated. If this value is set to 'WARN', 
+    for example, and your tests generate one or more 'WARN' or higher severity messages 
+    (ERROR or FATAL), Nerrvana execution status, and Jenkins build, will be FAILED.
+    For the full list of levels, visit http://www.nerrvana.com/docs/using-messages page.
+    -->
+    <message-threshold>ERROR</message-threshold>
+
+    <!--
+    Maximum execution time (in seconds). Defines how long the Nerrvana plug-in
+    will wait for tests to complete. Start by setting to a large value and
+    adjust accordingly after a few runs.
+    -->
     <max-execution-time>3600</max-execution-time>
-    <!-- How often Nerrvana plug-in will update tests execution status from Nerrvana (seconds) -->
+    <!-- How often the Nerrvana plug-in will update test execution status from Nerrvana (in seconds). -->
     <poll-period>20</poll-period>
   </plugin-settings>
-  <use-messages-to-set-build-status>false</use-messages-to-set-build-status>
 </nerrvana-plugin>

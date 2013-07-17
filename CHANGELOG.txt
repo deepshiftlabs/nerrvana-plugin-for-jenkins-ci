@@ -1,10 +1,17 @@
  ------
  Change log
  ------
- 2011-10-12
- ------
 
-What's new in version 1.02.00 - 2012-10-12
+What's new in version 1.02.02 - 2013-07-16
+ 
+ * Changed parsing of config file to UTF-8
+ * Trim XML parameters before config validation
+
+What's new in version 1.02.01 - 2013-01-09
+ 
+ * Execution status names changed
+
+What's new in version 1.02.00 - 2012-11-01
  
  * Project documentation (generated with 'mvn site')
 
@@ -13,6 +20,8 @@ What's new in version 1.02.00 - 2012-10-12
    interpret execution results and create aggregated execution report. 
 
  * Misc changes and code improvements.
+
+ * Plugin repository forked as https://github.com/jenkinsci/nerrvana-plugin
 
 What's new in version 1.01.00 - 2012-07-23
 

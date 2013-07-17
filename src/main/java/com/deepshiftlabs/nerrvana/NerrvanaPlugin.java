@@ -439,14 +439,14 @@ public class NerrvanaPlugin extends Builder {
                 Logger.tori(exec.toString(), "\tCurrent execution status: "
                         + exec.status + "\n");
                 if (!(exec.status == null || exec.status.trim().length() == 0
-                        || exec.status.indexOf("plan") >= 0 || exec.status
-                        .indexOf("run") >= 0)) {
+                        || exec.status.indexOf("next") == 0 || exec.status
+                        .indexOf("run") == 0)) {
                     break;
                 }
             }
             Logger.infoln("-----END NERRVANA POLLING CYCLE---");
 
-            if (lmaxtime <= 0 && exec.status.indexOf("run") >= 0) {
+            if (lmaxtime <= 0 && exec.status.indexOf("run") == 0) {
                 throw new Exception(
                         "Maximum Nervana test execution time exceeded (Consider increasing corresponding parameter in job config).\n");
             }

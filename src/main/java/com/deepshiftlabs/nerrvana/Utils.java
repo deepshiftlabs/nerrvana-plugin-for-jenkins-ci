@@ -62,7 +62,7 @@ public class Utils {
 	}
 
 	public static Document string2xml(String s) throws Exception {
-		return bytes2xml(s.getBytes());
+		return bytes2xml(s.getBytes("UTF-8"));
 	}
 
 	public static Document bytes2xml(byte[] ab) throws Exception {

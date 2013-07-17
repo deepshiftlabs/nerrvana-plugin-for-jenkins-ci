@@ -130,7 +130,7 @@ public class NerrvanaExecution {
 				org.w3c.dom.Node platform = platforms.item(i);
 				String status = Utils.getUniqueChildNodeValue(platform,
 						"status");
-				if (status == null || !status.equalsIgnoreCase("OK")) {
+				if (status == null || !status.equalsIgnoreCase("completed")) {
 					String platformName = Utils.getUniqueChildNodeValue(
 							platform, "name");
 					result = false;
